@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
 import jwt
 import os
+import json
 
 
 class CustomTokenPairView(TokenObtainPairView):
@@ -37,10 +38,17 @@ def listado_tickets(request):
         is_admin = User.objects.filter(
             username=payload['username'], groups__name='administrador'
         ).exists()
+        tuplas_estado = Ticket._meta.get_field('estado').choices
+        lista_estados = json.loads(json.dumps(tuplas_estado))
+        keys = ['id', 'descripcion']
+        data = [dict(zip(keys, estados)) for estados in lista_estados]
+        estados = json.loads(json.dumps(data))
+        estados.insert(0, {'id': "", 'descripcion': '-- Seleccione estado --'})
         serializer = TicketSerializer(tickets, many=True)
         data = {
             'is_admin': is_admin,
-            'data': serializer.data
+            'data': serializer.data,
+            'estados': estados
         }
         return JsonResponse(data, status=200, safe=False)
 
